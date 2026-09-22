@@ -137,11 +137,15 @@ private struct GlassBackground<S: Shape>: ViewModifier {
     let shape: S
 
     func body(content: Content) -> some View {
+        #if compiler(>=6.2)
         if #available(macOS 26.0, *) {
             content.glassEffect(.regular, in: shape)
         } else {
             content.background(.thinMaterial, in: shape)
         }
+        #else
+        content.background(.thinMaterial, in: shape)
+        #endif
     }
 }
 
