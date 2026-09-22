@@ -416,7 +416,7 @@ class AppDelegate: AppDelegateParent {
         paddleProductID = "841006"
         trialDays = PRO_TRIAL_DAYS
         trialText = ""
-        price = 15
+        price = NSNumber(value: 15)
         productName = "Clop Pro"
         vendorName = "THE LOW TECH GUYS SRL"
         hasFreeFeatures = true
@@ -433,13 +433,11 @@ class AppDelegate: AppDelegateParent {
             KM.primaryKeys = Defaults[.enabledKeys] + Defaults[.quickResizeKeys]
             KM.onPrimaryHotkey = { key in
                 self.handleHotkey(key)
-                if !PRO_FEATURES_UNLOCKED { let _ = invalidReq2(PRODUCTS, nil) }
             }
 
             KM.secondaryKeyModifiers = [.lcmd]
             KM.onSecondaryHotkey = { key in
                 self.handleCommandHotkey(key)
-                if !PRO_FEATURES_UNLOCKED { let _ = invalidReq3(PRODUCTS, nil) }
             }
 
             KM.onBareHotkey = { key in
@@ -571,7 +569,6 @@ class AppDelegate: AppDelegateParent {
             .store(in: &observers)
         initMachPortListener()
 
-        if !PRO_FEATURES_UNLOCKED { _ = invalidReq(PRODUCTS, nil) }
         setupServiceProvider()
         // Written every launch whether or not the switch is on, so an agent can find Clop and read how
         // to ask for permission rather than guessing.
