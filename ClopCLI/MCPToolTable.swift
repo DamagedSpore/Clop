@@ -262,7 +262,7 @@ extension MCPServer {
 extension MCPServer {
     static func pipelineRun(_ a: [String: Any]) throws -> ToolOutput {
         var command = ["pipeline", "run", argument(a["pipeline"] ?? "")]
-        command += paths(a)
+        command += try paths(a)
         command += flag(a, "recursive", "--recursive")
         command += flag(a, "skipErrors", "--skip-errors")
         command += flag(a, "hideResult", "--hide-result")
