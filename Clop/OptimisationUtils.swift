@@ -2942,7 +2942,7 @@ import LowtechPro
 @discardableResult @inline(__always)
 @MainActor func proGuard<T>(count: inout Int, limit: Int = FREE_OPTIMISATION_LIMIT, url: URL? = nil, _ action: @escaping () async throws -> T) async throws -> T {
     guard !BM.decompressingBinaries else { throw ClopError.decompressingBinariesError }
-    guard PRO_FEATURES_UNLOCKED || (count < limit && validReq()) else {
+    guard PRO_FEATURES_UNLOCKED || count < limit else {
         clopDebugLog(
             "proGuard BLOCKED: PRO_FEATURES_UNLOCKED=\(PRO_FEATURES_UNLOCKED) count=\(count) limit=\(limit) url=\(url?.absoluteString ?? "nil") PRO=\(PRO != nil ? "exists" : "nil") productActivated=\(PRO?.productActivated ?? false) onTrial=\(PRO?.onTrial ?? false)"
         )
