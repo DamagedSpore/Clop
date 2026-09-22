@@ -1940,7 +1940,7 @@ struct FloatingPreviewAllStates: View {
 
         let proError = Optimiser(id: Optimiser.IDs.pro, type: .image(.png))
         proError.isPreview = true
-        proError.finish(error: "You've optimised 5 files this session", notice: "Get Clop Pro to remove the limit and unlock all features. Relaunch the app to reset the counter.")
+        proError.finish(error: "You've optimised \(FREE_OPTIMISATION_LIMIT) files this session", notice: "Get Clop Pro to remove the limit and unlock all features. Relaunch the app to reset the counter.")
 
         o.optimisers = [clipEnd, videoOpt, cropped, errorOpt, proError]
         for opt in o.optimisers {

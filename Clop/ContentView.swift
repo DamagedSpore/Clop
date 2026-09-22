@@ -192,7 +192,7 @@ struct MenuView: View {
             }
         }
 
-        if !proactive, !om.skippedBecauseNotPro.isEmpty {
+        if !PRO_FEATURES_UNLOCKED, !om.skippedBecauseNotPro.isEmpty {
             proErrors
         }
 
@@ -206,7 +206,7 @@ struct MenuView: View {
             Button("Privacy policy") {
                 NSWorkspace.shared.open("https://lowtechguys.com/clop/privacy".url!)
             }
-            Text("License: \(proactive ? "Pro" : "Free")")
+            Text("License: \(PRO_FEATURES_UNLOCKED ? "Pro" : "Free")")
             #if DEBUG
                 Button("Reset Trial") {
                     product?.resetTrial()

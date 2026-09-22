@@ -26,6 +26,11 @@ import UniformTypeIdentifiers
 
 private let log = Logger(subsystem: LOG_SUBSYSTEM, category: "ClopApp")
 
+/// Feature policy for this GPL fork: every feature is available without a licence or trial.
+let PRO_FEATURES_UNLOCKED = true
+let FREE_OPTIMISATION_LIMIT = 5
+let PRO_TRIAL_DAYS = 0
+
 /// The Apple processes a person opens an app from. A reopen sent by any other Apple process is
 /// the system reaching into Clop: Siri (`com.apple.Siri`, and `com.apple.campo` for Siri AI)
 /// resolving App Intents, the Shortcuts runners running a Clop action, intent extensions. None of
@@ -291,7 +296,7 @@ class AppDelegate: AppDelegateParent {
     @MainActor var resolvingDrag = false
 
     @MainActor lazy var dragMonitor = GlobalEventMonitor(mask: [.leftMouseDragged]) { event in
-        guard self.finishedOnboarding, NSEvent.pressedMouseButtons > 0, proactive || DM.optimisationCount <= 5 else {
+        guard self.finishedOnboarding, NSEvent.pressedMouseButtons > 0, PRO_FEATURES_UNLOCKED || DM.optimisationCount <= FREE_OPTIMISATION_LIMIT else {
             return
         }
 
@@ -409,8 +414,8 @@ class AppDelegate: AppDelegateParent {
         paddleVendorID = "122873"
         paddleAPIKey = "e1e517a68c1ed1bea2ac968a593ac147"
         paddleProductID = "841006"
-        trialDays = 14
-        trialText = "This is a trial for the Pro features. After the trial, the app will automatically revert to the free version."
+        trialDays = PRO_TRIAL_DAYS
+        trialText = ""
         price = 15
         productName = "Clop Pro"
         vendorName = "THE LOW TECH GUYS SRL"
@@ -428,13 +433,13 @@ class AppDelegate: AppDelegateParent {
             KM.primaryKeys = Defaults[.enabledKeys] + Defaults[.quickResizeKeys]
             KM.onPrimaryHotkey = { key in
                 self.handleHotkey(key)
-                let _ = invalidReq2(PRODUCTS, nil)
+                if !PRO_FEATURES_UNLOCKED { let _ = invalidReq2(PRODUCTS, nil) }
             }
 
             KM.secondaryKeyModifiers = [.lcmd]
             KM.onSecondaryHotkey = { key in
                 self.handleCommandHotkey(key)
-                let _ = invalidReq3(PRODUCTS, nil)
+                if !PRO_FEATURES_UNLOCKED { let _ = invalidReq3(PRODUCTS, nil) }
             }
 
             KM.onBareHotkey = { key in
@@ -444,20 +449,20 @@ class AppDelegate: AppDelegateParent {
         super.applicationDidFinishLaunching(_: notification)
         UM.updater = updateController.updater
         PM.pro = pro
-        if !SWIFTUI_PREVIEW {
+        if !SWIFTUI_PREVIEW, !PRO_FEATURES_UNLOCKED {
             clopDebugLog("applicationDidFinishLaunching: about to checkProLicense (productActivated=\(pro.productActivated), onTrial=\(pro.onTrial))")
             pro.checkProLicense()
         }
 
         let p = pro
         p.$productActivated.sink { newValue in
-            clopDebugLog("proactive observer: productActivated changed to \(newValue) (onTrial=\(p.onTrial), proactive will be \(newValue || p.onTrial))")
+            clopDebugLog("PRO_FEATURES_UNLOCKED observer: productActivated changed to \(newValue) (onTrial=\(p.onTrial), PRO_FEATURES_UNLOCKED will be \(newValue || p.onTrial))")
             // The licence resolves after launch, so the card written at startup says pro:false even for
             // a licensed user until this lands. Rewrite it rather than let an agent read a stale no.
             mainActor { MCPInstaller.writeServerCard() }
         }.store(in: &proDebugCancellables)
         p.$onTrial.sink { newValue in
-            clopDebugLog("proactive observer: onTrial changed to \(newValue) (productActivated=\(p.productActivated), proactive will be \(p.productActivated || newValue))")
+            clopDebugLog("PRO_FEATURES_UNLOCKED observer: onTrial changed to \(newValue) (productActivated=\(p.productActivated), PRO_FEATURES_UNLOCKED will be \(p.productActivated || newValue))")
             mainActor { MCPInstaller.writeServerCard() }
         }.store(in: &proDebugCancellables)
 
@@ -566,7 +571,7 @@ class AppDelegate: AppDelegateParent {
             .store(in: &observers)
         initMachPortListener()
 
-        _ = invalidReq(PRODUCTS, nil)
+        if !PRO_FEATURES_UNLOCKED { _ = invalidReq(PRODUCTS, nil) }
         setupServiceProvider()
         // Written every launch whether or not the switch is on, so an agent can find Clop and read how
         // to ask for permission rather than guessing.
@@ -1407,7 +1412,7 @@ class AppDelegate: AppDelegateParent {
             initClipboardOptimiser()
         }
 
-        _ = invalidReq(PRODUCTS, nil)
+        if !PRO_FEATURES_UNLOCKED { _ = invalidReq(PRODUCTS, nil) }
     }
 
     @MainActor func initClipboardOptimiser() {
@@ -1638,7 +1643,7 @@ extension NSPasteboardItem {
     }
 
     let optimiser = OM.optimiser(id: Optimiser.IDs.pro, type: .unknown, operation: "")
-    optimiser.finish(error: "You've optimised 5 files this session", notice: "Get Clop Pro to remove the limit and unlock all features.\nRelaunch the app to reset the counter.", keepFor: 5000)
+    optimiser.finish(error: "You've optimised \(FREE_OPTIMISATION_LIMIT) files this session", notice: "Get Clop Pro to remove the limit and unlock all features.\nRelaunch the app to reset the counter.", keepFor: 5000)
 }
 
 // Stable identifiers for Clop's AppKit windows (the batch window's lives in BatchWindow.swift). Used to
@@ -1833,7 +1838,7 @@ struct ClopApp: App {
         MenuBarExtra(isInserted: $showMenubarIcon, content: {
             MenuView()
         }, label: {
-            let badge = !proactive && !om.ignoreProErrorBadge && om.skippedBecauseNotPro.isNotEmpty
+            let badge = !PRO_FEATURES_UNLOCKED && !om.ignoreProErrorBadge && om.skippedBecauseNotPro.isNotEmpty
             SwiftUI.Image(nsImage: NSImage(
                 resource: badge
                     ? (useGeometricMenubarIcon ? .menubarIconBadgeGeometric : useClassicMenubarIcon ? .menubarIconBadgeClassic : .menubarIconBadge)
