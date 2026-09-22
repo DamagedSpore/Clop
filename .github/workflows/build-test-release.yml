@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: build-unlocked-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Release arm64
