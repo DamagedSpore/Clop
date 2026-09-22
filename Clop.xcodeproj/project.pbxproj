@@ -1017,7 +1017,7 @@
 				C7DF1A262AB8885500AF8EDC /* XCRemoteSwiftPackageReference "swift-ignore" */,
 				C7956A482AC209F200C0EDF2 /* XCRemoteSwiftPackageReference "swift-argument-parser" */,
 				C73987702D32ECE200CCC939 /* XCRemoteSwiftPackageReference "SymbolPicker" */,
-				C7605FC12F78194D0087B195 /* XCLocalSwiftPackageReference "../../../Github/alin23/warpdrop/swift" */,
+				C7605FC12F78194D0087B195 /* XCLocalSwiftPackageReference "Vendor/WarpDrop" */,
 				C7A1B0022FA3D00000JXLCDR /* XCRemoteSwiftPackageReference "jxl-coder-swift" */,
 			);
 			productRefGroup = C7AB6622288301590041BEC8 /* Products */;
@@ -1405,9 +1405,9 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		C7605FC12F78194D0087B195 /* XCLocalSwiftPackageReference "../../../Github/alin23/warpdrop/swift" */ = {
+		C7605FC12F78194D0087B195 /* XCLocalSwiftPackageReference "Vendor/WarpDrop" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../../../Github/alin23/warpdrop/swift;
+			relativePath = Vendor/WarpDrop;
 		};
 /* End XCLocalSwiftPackageReference section */
 
