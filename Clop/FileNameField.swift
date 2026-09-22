@@ -99,11 +99,15 @@ struct FileNameField: View {
 
 extension View {
     @ViewBuilder func glassOrMaterial(in shape: some Shape) -> some View {
+        #if compiler(>=6.2)
         if #available(macOS 26.0, *) {
             glassEffect(.regular, in: shape)
         } else {
             background(.ultraThinMaterial, in: shape)
         }
+        #else
+        background(.ultraThinMaterial, in: shape)
+        #endif
     }
 }
 
