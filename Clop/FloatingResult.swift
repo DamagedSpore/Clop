@@ -40,19 +40,28 @@ extension View {
             background(Color.white, in: shape)
                 .overlay(shape.strokeBorder(Color.black.opacity(0.15), lineWidth: 0.5))
                 .shadow(color: .black.opacity(0.2), radius: 2, y: 1)
-        } else if #available(macOS 26.0, *) {
-            glassEffect(.regular, in: shape)
-                .shadow(color: .black.opacity(0.2), radius: 2, y: 1)
         } else {
+            #if compiler(>=6.2)
+            if #available(macOS 26.0, *) {
+                glassEffect(.regular, in: shape)
+                    .shadow(color: .black.opacity(0.2), radius: 2, y: 1)
+            } else {
+                background(.ultraThickMaterial, in: shape)
+                    .overlay(shape.strokeBorder(Color.primary.opacity(0.15), lineWidth: 0.5))
+                    .shadow(color: .black.opacity(0.2), radius: 2, y: 1)
+            }
+            #else
             background(.ultraThickMaterial, in: shape)
                 .overlay(shape.strokeBorder(Color.primary.opacity(0.15), lineWidth: 0.5))
                 .shadow(color: .black.opacity(0.2), radius: 2, y: 1)
+            #endif
         }
     }
 
     @ViewBuilder func noThumbBackground(isError: Bool) -> some View {
         let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
         if isError {
+            #if compiler(>=6.2)
             if #available(macOS 26.0, *) {
                 background(.red.opacity(0.5), in: shape)
                     .glassEffect(.regular, in: shape)
@@ -60,9 +69,14 @@ extension View {
                 background(.red.opacity(0.5), in: shape)
                     .background(.thinMaterial, in: shape)
             }
+            #else
+            background(.red.opacity(0.5), in: shape)
+                .background(.thinMaterial, in: shape)
+            #endif
         } else {
             // Semi-opaque backing so the panel reads against the desktop instead of being see-through
             // (bare .glassEffect on macOS 26 has no fill of its own).
+            #if compiler(>=6.2)
             if #available(macOS 26.0, *) {
                 background(Color.bg.primary.opacity(0.75), in: shape)
                     .glassEffect(.regular, in: shape)
@@ -70,6 +84,10 @@ extension View {
                 background(Color.bg.primary.opacity(0.75), in: shape)
                     .background(.thinMaterial, in: shape)
             }
+            #else
+            background(Color.bg.primary.opacity(0.75), in: shape)
+                .background(.thinMaterial, in: shape)
+            #endif
         }
     }
 }
@@ -132,6 +150,7 @@ private struct GlassChipFill: ViewModifier {
     var tintOpacity: Double
 
     func body(content: Content) -> some View {
+        #if compiler(>=6.2)
         if #available(macOS 26.0, *) {
             content
                 .background(Color.inverted.opacity(tintOpacity), in: shape)
@@ -141,6 +160,11 @@ private struct GlassChipFill: ViewModifier {
                 .background(Color.inverted.opacity(tintOpacity), in: shape)
                 .background(.thinMaterial, in: shape)
         }
+        #else
+        content
+            .background(Color.inverted.opacity(tintOpacity), in: shape)
+            .background(.thinMaterial, in: shape)
+        #endif
     }
 }
 
