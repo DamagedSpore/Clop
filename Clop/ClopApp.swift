@@ -414,7 +414,7 @@ class AppDelegate: AppDelegateParent {
         paddleVendorID = "122873"
         paddleAPIKey = "e1e517a68c1ed1bea2ac968a593ac147"
         paddleProductID = "841006"
-        trialDays = PRO_TRIAL_DAYS
+        trialDays = NSNumber(value: PRO_TRIAL_DAYS)
         trialText = ""
         price = NSNumber(value: 15)
         productName = "Clop Pro"
@@ -1409,7 +1409,6 @@ class AppDelegate: AppDelegateParent {
             initClipboardOptimiser()
         }
 
-        if !PRO_FEATURES_UNLOCKED { _ = invalidReq(PRODUCTS, nil) }
     }
 
     @MainActor func initClipboardOptimiser() {
