@@ -39,7 +39,16 @@ jobs:
           set -euo pipefail
           xcodebuild -resolvePackageDependencies \
             -project Clop.xcodeproj \
-            -scheme Clop
+            -scheme Clop \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData"
+
+      - name: Patch duplicate swift-ignore module map
+        shell: bash
+        run: |
+          set -euo pipefail
+          duplicate="$RUNNER_TEMP/DerivedData/SourcePackages/checkouts/swift-ignore/IgnoreRust.xcframework/macos-arm64_x86_64/Headers/libIgnore/module.modulemap"
+          test -f "$duplicate"
+          rm "$duplicate"
 
       - name: Build Release app
         shell: bash
