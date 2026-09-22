@@ -60,6 +60,7 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             DEVELOPMENT_TEAM="" \
+            MACOSX_DEPLOYMENT_TARGET=13.0 \
             build | tee "$RUNNER_TEMP/xcodebuild.log"
 
       - name: Ad-hoc sign and package
