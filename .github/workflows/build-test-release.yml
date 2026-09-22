@@ -46,6 +46,15 @@ jobs:
             -scheme Clop \
             -derivedDataPath "$RUNNER_TEMP/DerivedData"
 
+      - name: Disable Paddle in unlocked build
+        shell: bash
+        run: |
+          set -euo pipefail
+          lowtech="$RUNNER_TEMP/DerivedData/SourcePackages/checkouts/Lowtech/Sources/LowtechPro/Pro.swift"
+          test -f "$lowtech"
+          perl -0pi -e 's/self\.paddleDelegate = paddleDelegate\n\n        paddle =/self.paddleDelegate = paddleDelegate\n\n        if trialDays.intValue == 0, hasFreeFeatures {\n            productActivated = true\n            onTrial = false\n            return\n        }\n\n        paddle =/' "$lowtech"
+          grep -q "if trialDays.intValue == 0, hasFreeFeatures" "$lowtech"
+
       - name: Patch duplicate swift-ignore module map
         shell: bash
         run: |
