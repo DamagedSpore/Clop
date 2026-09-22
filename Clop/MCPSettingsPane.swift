@@ -15,14 +15,14 @@ struct MCPSettingsView: View {
     var body: some View {
         Form {
             Section(header: SectionHeader(title: "MCP")) {
-                if !proactive {
+                if !PRO_FEATURES_UNLOCKED {
                     proRow
                 }
                 Toggle(isOn: $mcpEnabled) {
                     Text("Enable MCP").regular(13)
                         + Text("\nAllow agents to control Clop, run file optimisations, change settings, write pipelines").round(11, weight: .regular).foregroundColor(.secondary)
                 }
-                .disabled(!proactive)
+                .disabled(!PRO_FEATURES_UNLOCKED)
                 .onChange(of: mcpEnabled) { _ in MCPInstaller.writeServerCard() }
                 .searchAnchor("mcp.main.mcpEnabled")
 
@@ -30,7 +30,7 @@ struct MCPSettingsView: View {
                     Text("Allow agents to write arbitrary scripts in pipelines").regular(13)
                         + Text("\nUsing scripts in pipelines allows for flexible operations but can be dangerous if not properly verified").round(11, weight: .regular).foregroundColor(.secondary)
                 }
-                .disabled(!proactive || !mcpEnabled)
+                .disabled(!PRO_FEATURES_UNLOCKED || !mcpEnabled)
                 .onChange(of: mcpAllowScriptSteps) { on in
                     guard on else { return }
                     if !askAboutScripts() {

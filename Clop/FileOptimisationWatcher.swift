@@ -378,7 +378,7 @@ class FileOptimisationWatcher {
 
         DebugDump.record("[fsevent] >>> optimising \(path.string) (\(fileType.description) watcher)")
         var count = optimisedCount
-        try? await proGuard(count: &count, limit: 5, url: path.url) {
+        try? await proGuard(count: &count, limit: FREE_OPTIMISATION_LIMIT, url: path.url) {
             self.handler(path)
         }
         optimisedCount = count

@@ -189,7 +189,7 @@ enum DebugDump {
             "macOS: \(ProcessInfo.processInfo.operatingSystemVersionString)",
             "architecture: \(ARCH)",
             "locale: \(Locale.current.identifier)",
-            "license: \(proactive ? "Pro" : "Free")",
+            "license: \(PRO_FEATURES_UNLOCKED ? "Pro" : "Free")",
             "dump created: \(Date())",
             "",
             "workdir: \(FilePath.workdir.string)",

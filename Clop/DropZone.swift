@@ -137,11 +137,15 @@ private struct GlassBackground<S: Shape>: ViewModifier {
     let shape: S
 
     func body(content: Content) -> some View {
+        #if compiler(>=6.2)
         if #available(macOS 26.0, *) {
             content.glassEffect(.regular, in: shape)
         } else {
             content.background(.thinMaterial, in: shape)
         }
+        #else
+        content.background(.thinMaterial, in: shape)
+        #endif
     }
 }
 
@@ -779,7 +783,7 @@ func optimiseDroppedItems(_ itemProviders: [NSItemProvider], copy: Bool, preset:
     if Defaults[.useBatchModeForFolders], droppedFileProviders.count > Defaults[.batchModeFileCountThreshold] {
         // Optimising more files than the batch threshold in one drop is a Pro feature: surface a
         // visible Pro error instead of silently optimising the whole pile one-by-one for free.
-        guard proactive else {
+        guard PRO_FEATURES_UNLOCKED else {
             let optimiser = OM.optimiser(id: Optimiser.IDs.pro, type: .unknown, operation: "")
             optimiser.finish(
                 error: "Batch optimisation is a Pro feature",
@@ -819,11 +823,11 @@ func optimiseDroppedItems(_ itemProviders: [NSItemProvider], copy: Bool, preset:
     // (whose per-file proGuard count can't enforce a limit across concurrent tasks). A handful of
     // files still goes through for free.
     let droppedItemCount = max(itemProvidersCount, droppedFileProviders.count)
-    if !proactive, droppedItemCount > 5 {
+    if !PRO_FEATURES_UNLOCKED, droppedItemCount > FREE_OPTIMISATION_LIMIT {
         let optimiser = OM.optimiser(id: Optimiser.IDs.pro, type: .unknown, operation: "")
         optimiser.finish(
-            error: "Optimising more than 5 files at once is a Pro feature",
-            notice: "Get Clop Pro to remove the limit,\nor drop 5 or fewer files at a time.",
+            error: "Optimising more than \(FREE_OPTIMISATION_LIMIT) files at once is a Pro feature",
+            notice: "Get Clop Pro to remove the limit,\nor drop \(FREE_OPTIMISATION_LIMIT) or fewer files at a time.",
             keepFor: 7000
         )
         return true
@@ -1077,7 +1081,7 @@ func optimiseDir(path dir: FilePath, aggressive: Bool? = nil, source: Optimisati
     // Batch mode: a large folder is handed to the lightweight engine + native window instead of one
     // heavy Optimiser/thumbnail per file. Pro-only; free users fall through to the per-file proGuard
     // path below (capped at the free limit).
-    if Defaults[.useBatchModeForFolders], proactive, urls.count > Defaults[.batchModeFileCountThreshold] {
+    if Defaults[.useBatchModeForFolders], PRO_FEATURES_UNLOCKED, urls.count > Defaults[.batchModeFileCountThreshold] {
         let paths = urls.compactMap(\.filePath)
         // Drops open the prepare panel (review knobs, then Optimise); the CLI auto-starts instead.
         BAT.prepare(paths: paths, source: source ?? .dir(dir.string))
@@ -1089,7 +1093,7 @@ func optimiseDir(path dir: FilePath, aggressive: Bool? = nil, source: Optimisati
         for url in urls {
             let path = url.filePath!
             let added = group.addTaskUnlessCancelled {
-                _ = try await proGuard(count: &DM.optimisationCount, limit: 5, url: path.url) {
+                _ = try await proGuard(count: &DM.optimisationCount, limit: FREE_OPTIMISATION_LIMIT, url: path.url) {
                     try await optimiseItem(.file(path), id: path.string, aggressiveOptimisation: aggressive, optimisationCount: &manualOptimisationCount, copyToClipboard: false, source: source, output: output)
                 }
             }
@@ -1108,7 +1112,7 @@ func optimiseFile(from item: NSSecureCoding?, identifier: String, aggressive: Bo
         try await optimiseDir(path: path, aggressive: aggressive, source: source, output: output, types: ALL_FORMATS)
         return
     }
-    _ = try await proGuard(count: &DM.optimisationCount, limit: 5, url: path.url) { () async throws -> ClipboardType? in
+    _ = try await proGuard(count: &DM.optimisationCount, limit: FREE_OPTIMISATION_LIMIT, url: path.url) { () async throws -> ClipboardType? in
         if await skipOptimiseAndRunPipelineIfEncoding(pipeline, path: path, source: source) {
             return nil
         }

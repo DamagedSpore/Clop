@@ -2940,11 +2940,11 @@ func optimiseURL(
 import LowtechPro
 
 @discardableResult @inline(__always)
-@MainActor func proGuard<T>(count: inout Int, limit: Int = 5, url: URL? = nil, _ action: @escaping () async throws -> T) async throws -> T {
+@MainActor func proGuard<T>(count: inout Int, limit: Int = FREE_OPTIMISATION_LIMIT, url: URL? = nil, _ action: @escaping () async throws -> T) async throws -> T {
     guard !BM.decompressingBinaries else { throw ClopError.decompressingBinariesError }
-    guard proactive || count < limit, validReq() else {
+    guard PRO_FEATURES_UNLOCKED || count < limit else {
         clopDebugLog(
-            "proGuard BLOCKED: proactive=\(proactive) count=\(count) limit=\(limit) url=\(url?.absoluteString ?? "nil") PRO=\(PRO != nil ? "exists" : "nil") productActivated=\(PRO?.productActivated ?? false) onTrial=\(PRO?.onTrial ?? false)"
+            "proGuard BLOCKED: PRO_FEATURES_UNLOCKED=\(PRO_FEATURES_UNLOCKED) count=\(count) limit=\(limit) url=\(url?.absoluteString ?? "nil") PRO=\(PRO != nil ? "exists" : "nil") productActivated=\(PRO?.productActivated ?? false) onTrial=\(PRO?.onTrial ?? false)"
         )
         if let url {
             OM.skippedBecauseNotPro = OM.skippedBecauseNotPro.with(url)
@@ -3208,7 +3208,7 @@ func isAlreadyTemplatedPath(type: ClopFileType, path: FilePath) -> Bool {
                 [.optimise]
             }
 
-            let result: Image? = try await proGuard(count: &optimisationCount, limit: 5, url: img.path.url) {
+            let result: Image? = try await proGuard(count: &optimisationCount, limit: FREE_OPTIMISATION_LIMIT, url: img.path.url) {
                 if let cropSize {
                     guard cropSize < img.size else { throw ClopError.alreadyResized(img.path) }
                 }
@@ -3253,7 +3253,7 @@ func isAlreadyTemplatedPath(type: ClopFileType, path: FilePath) -> Bool {
                     [.optimise]
                 }
 
-                let result: Image? = try await proGuard(count: &optimisationCount, limit: 5, url: path.url) {
+                let result: Image? = try await proGuard(count: &optimisationCount, limit: FREE_OPTIMISATION_LIMIT, url: path.url) {
                     if let cropSize {
                         guard cropSize < img.size else { throw ClopError.alreadyResized(img.path) }
                     }
@@ -3301,7 +3301,7 @@ func isAlreadyTemplatedPath(type: ClopFileType, path: FilePath) -> Bool {
                     removeAudio: removeAudio
                 )
 
-                let result: Video? = try await proGuard(count: &optimisationCount, limit: 5, url: path.url) {
+                let result: Video? = try await proGuard(count: &optimisationCount, limit: FREE_OPTIMISATION_LIMIT, url: path.url) {
                     let video = await (try? Video.byFetchingMetadata(path: path, thumb: !hideFloatingResult)) ?? Video(path: path, thumb: !hideFloatingResult)
 
                     if let cropSize, let size = video.size {
@@ -3341,7 +3341,7 @@ func isAlreadyTemplatedPath(type: ClopFileType, path: FilePath) -> Bool {
                 var filePdfActions: [PipelineAction] = [.optimise]
                 if let cropSize { filePdfActions.append(.downscale(factor: nil, cropSize: cropSize)) }
 
-                let result = try await proGuard(count: &optimisationCount, limit: 5, url: path.url) {
+                let result = try await proGuard(count: &optimisationCount, limit: FREE_OPTIMISATION_LIMIT, url: path.url) {
                     let pdf = PDF(path, thumb: !hideFloatingResult)
                     guard let doc = pdf.document else { throw ClopError.invalidPDF(path) }
                     guard !doc.isEncrypted else { throw ClopError.encryptedPDF(path) }
@@ -3376,7 +3376,7 @@ func isAlreadyTemplatedPath(type: ClopFileType, path: FilePath) -> Bool {
                     throw ClopError.alreadyOptimised(path)
                 }
 
-                let result: Audio? = try await proGuard(count: &optimisationCount, limit: 5, url: path.url) {
+                let result: Audio? = try await proGuard(count: &optimisationCount, limit: FREE_OPTIMISATION_LIMIT, url: path.url) {
                     let audio = await (try? Audio.byFetchingMetadata(path: path, thumb: !hideFloatingResult)) ?? Audio(path: path, thumb: !hideFloatingResult)
                     let bitrateOverride: Int? = if let audioBitrate {
                         audioBitrate
@@ -3405,7 +3405,7 @@ func isAlreadyTemplatedPath(type: ClopFileType, path: FilePath) -> Bool {
                 throw ClopError.unknownType
             }
         case let .url(url):
-            return try await proGuard(count: &optimisationCount, limit: 5, url: url) {
+            return try await proGuard(count: &optimisationCount, limit: FREE_OPTIMISATION_LIMIT, url: url) {
                 try await optimiseURL(
                     url,
                     copyToClipboard: copyToClipboard,
@@ -3608,7 +3608,7 @@ func processPipelineRequestURL(_ req: OptimisationRequest, url: URL) async throw
 
 func processOptimisationRequest(_ req: OptimisationRequest) async throws -> [OptimisationResponse] {
     // --review: open the batch window for the user to tweak knobs and press Optimise; don't process here.
-    if req.prepareInBatch == true, await MainActor.run(body: { proactive }) {
+    if req.prepareInBatch == true, await MainActor.run(body: { PRO_FEATURES_UNLOCKED }) {
         await MainActor.run {
             BAT.prepare(paths: req.urls.compactMap(\.filePath), source: req.source.optSource)
             BAT.showWindow()

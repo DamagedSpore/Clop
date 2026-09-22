@@ -1,0 +1,128 @@
+name: Build unlocked test release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/unlock-pro-features
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-unlocked-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Release arm64
+    runs-on: macos-15
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Verify toolchain and bundled binaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          swift --version
+          git lfs pull
+          test -s Clop/bin.tar.lrz
+          actual="$(shasum -a 256 Clop/bin.tar.lrz | awk '{print $1}')"
+          expected="$(tr -d '[:space:]' < Clop/bin.tar.lrz.sha256)"
+          test "$actual" = "$expected"
+
+      - name: Resolve Swift packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -resolvePackageDependencies \
+            -project Clop.xcodeproj \
+            -scheme Clop \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData"
+
+      - name: Disable Paddle in unlocked build
+        shell: bash
+        run: |
+          set -euo pipefail
+          lowtech="$RUNNER_TEMP/DerivedData/SourcePackages/checkouts/Lowtech/Sources/LowtechPro/Pro.swift"
+          test -f "$lowtech"
+          perl -0pi -e 's/self\.paddleDelegate = paddleDelegate\n\n        paddle =/self.paddleDelegate = paddleDelegate\n\n        if trialDays.intValue == 0, hasFreeFeatures {\n            productActivated = true\n            onTrial = false\n            return\n        }\n\n        paddle =/' "$lowtech"
+          grep -q "if trialDays.intValue == 0, hasFreeFeatures" "$lowtech"
+
+      - name: Patch duplicate swift-ignore module map
+        shell: bash
+        run: |
+          set -euo pipefail
+          duplicate="$RUNNER_TEMP/DerivedData/SourcePackages/checkouts/swift-ignore/IgnoreRust.xcframework/macos-arm64_x86_64/Headers/libIgnore/module.modulemap"
+          test -f "$duplicate"
+          rm "$duplicate"
+
+      - name: Build Release app
+        shell: bash
+        run: |
+          set -euo pipefail
+          set -o pipefail
+          xcodebuild \
+            -project Clop.xcodeproj \
+            -scheme Clop \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" \
+            MACOSX_DEPLOYMENT_TARGET=13.0 \
+            build | tee "$RUNNER_TEMP/xcodebuild.log"
+
+      - name: Ad-hoc sign and package
+        shell: bash
+        run: |
+          set -euo pipefail
+          app="$RUNNER_TEMP/DerivedData/Build/Products/Release/Clop.app"
+          test -d "$app"
+
+          codesign --force --deep --sign - --timestamp=none "$app"
+          codesign --verify --deep --strict --verbose=2 "$app"
+
+          mkdir -p dist/dmg
+          ditto "$app" dist/dmg/Clop.app
+          ln -s /Applications dist/dmg/Applications
+
+          hdiutil create \
+            -volname "Clop Unlocked Test" \
+            -srcfolder dist/dmg \
+            -ov \
+            -format UDZO \
+            dist/Clop-unlocked-arm64.dmg
+
+          ditto -c -k --sequesterRsrc --keepParent \
+            "$app" \
+            dist/Clop-unlocked-arm64.zip
+
+          shasum -a 256 \
+            dist/Clop-unlocked-arm64.dmg \
+            dist/Clop-unlocked-arm64.zip \
+            > dist/SHA256SUMS.txt
+
+      - name: Upload test release
+        uses: actions/upload-artifact@v4
+        with:
+          name: Clop-unlocked-arm64
+          path: |
+            dist/Clop-unlocked-arm64.dmg
+            dist/Clop-unlocked-arm64.zip
+            dist/SHA256SUMS.txt
+            ${{ runner.temp }}/xcodebuild.log
+          if-no-files-found: error
+          retention-days: 7

@@ -1343,7 +1343,7 @@ struct CompactPreview: View {
 
         let proErrorOpt = Optimiser(id: Optimiser.IDs.pro, type: .unknown)
         proErrorOpt.isPreview = true
-        proErrorOpt.finish(error: "You've optimised 5 files this session", notice: "Get Clop Pro to remove the limit and unlock all features.\nRelaunch the app to reset the counter.")
+        proErrorOpt.finish(error: "You've optimised \(FREE_OPTIMISATION_LIMIT) files this session", notice: "Get Clop Pro to remove the limit and unlock all features.\nRelaunch the app to reset the counter.")
 
         let noticeOpt = Optimiser(id: "notice", type: .unknown, operation: "")
         noticeOpt.finish(notice: "**Paused**\nNext clipboard event will be ignored")
@@ -1450,7 +1450,7 @@ struct CompactPreviewAllStates: View {
         let o = CompactPreview.om
         let proErrorOpt = Optimiser(id: Optimiser.IDs.pro, type: .unknown)
         proErrorOpt.isPreview = true
-        proErrorOpt.finish(error: "You've optimised 5 files this session", notice: "Get Clop Pro to remove the limit and unlock all features.\nRelaunch the app to reset the counter.")
+        proErrorOpt.finish(error: "You've optimised \(FREE_OPTIMISATION_LIMIT) files this session", notice: "Get Clop Pro to remove the limit and unlock all features.\nRelaunch the app to reset the counter.")
         o.optimisers.insert(proErrorOpt)
         mainActor {
             o.failedCount += 1

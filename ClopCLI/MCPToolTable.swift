@@ -261,17 +261,16 @@ extension MCPServer {
 
 extension MCPServer {
     static func pipelineRun(_ a: [String: Any]) throws -> ToolOutput {
-        try run(
-            ["pipeline", "run", argument(a["pipeline"] ?? "")] + paths(a)
-                + flag(a, "recursive", "--recursive")
-                + flag(a, "skipErrors", "--skip-errors")
-                + flag(a, "hideResult", "--hide-result")
-                + opt(a, "--types", "types")
-                + opt(a, "--optimise-behaviour", "optimiseBehaviour")
-                + opt(a, "--convert-behaviour", "convertBehaviour")
-                + ["--no-progress"],
-            timeout: fileTimeout
-        )
+        var command = ["pipeline", "run", argument(a["pipeline"] ?? "")]
+        command += try paths(a)
+        command += flag(a, "recursive", "--recursive")
+        command += flag(a, "skipErrors", "--skip-errors")
+        command += flag(a, "hideResult", "--hide-result")
+        command += opt(a, "--types", "types")
+        command += opt(a, "--optimise-behaviour", "optimiseBehaviour")
+        command += opt(a, "--convert-behaviour", "convertBehaviour")
+        command.append("--no-progress")
+        return try run(command, timeout: fileTimeout)
     }
 
     static func pipelineWrite(_ a: [String: Any]) throws -> ToolOutput {

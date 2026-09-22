@@ -150,7 +150,7 @@ enum MCPInstaller {
         // Pro only, and unlike the optimisation counters this is a wall rather than a nag: there is no
         // free MCP mode. Turning it off never needs a licence, so a lapsed licence can still be
         // switched off rather than being stuck on.
-        guard !enabled || proactive else {
+        guard !enabled || PRO_FEATURES_UNLOCKED else {
             mcpLog.info("MCP enable refused, no Pro licence")
             return
         }
@@ -171,7 +171,7 @@ enum MCPInstaller {
         switch url.lastPathComponent {
         case "start":
             guard !Defaults[.mcpEnabled] else { return true }
-            guard proactive else {
+            guard PRO_FEATURES_UNLOCKED else {
                 showProRequired()
                 return true
             }
@@ -204,8 +204,8 @@ enum MCPInstaller {
             "version": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?",
             "app": ["bundleID": "com.lowtechguys.Clop", "path": Bundle.main.bundlePath],
             "enabled": Defaults[.mcpEnabled],
-            "requiresPro": true,
-            "pro": proactive,
+            "requiresPro": false,
+            "pro": PRO_FEATURES_UNLOCKED,
             "transport": [
                 "type": "stdio",
                 "command": cliPath,
@@ -214,7 +214,7 @@ enum MCPInstaller {
             "control": [
                 "start": "open clop://mcp/start",
                 "stop": "open clop://mcp/stop",
-                "note": "Clop's MCP server needs Clop Pro. With a licence, reading works whether or not it is started; changes are refused until it is. Starting sticks across launches until it is stopped.",
+                "note": "This build includes MCP without a Pro licence. Reading works whether or not it is started; changes are refused until it is. Starting sticks across launches until it is stopped.",
             ],
         ]
         guard let data = try? JSONSerialization.data(withJSONObject: card, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]) else { return }

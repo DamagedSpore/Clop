@@ -2774,8 +2774,8 @@ struct Clop: ParsableCommand {
                 var status: [String: Any] = [
                     "enabled": enabled,
                     "allowScriptSteps": scripts,
-                    "pro": card["pro"] as? Bool ?? false,
-                    "requiresPro": true,
+                    "pro": card["pro"] as? Bool ?? true,
+                    "requiresPro": false,
                     "cardPath": cardPath,
                 ]
                 if let version = card["version"] as? String {
